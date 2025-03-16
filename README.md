@@ -13,20 +13,26 @@ Supports both **uncompressed** and **compressed** files (`.vcf.gz`, `.fasta.gz`)
 ```bash
 git clone https://github.com/yourusername/vcf_consensus.git
 cd vcf_consensus
+```
 
 2. Install in a virtual environment
-
+```
 python -m venv .venv
-source .venv/bin/activate  # Linux/Mac
-# .venv\Scripts\activate   # Windows
+```
 
+```
+source .venv/bin/activate  # Linux/Mac
+```
+
+```
 uv pip install -e .
+```
 
 
 Usage
 
 Basic execution
-
+```bash
 python -m vcf_consensus.cli \
     --vcf input.vcf \
     --fasta reference.fasta \
@@ -34,6 +40,7 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output output_consensus.fasta
+```
 
 Command-line arguments
 
@@ -53,7 +60,8 @@ Argument	Description
 Examples
 
 1. Basic execution
-
+   
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -61,9 +69,11 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
+```bash
 
 2. Using .vcf.gz and .fasta.gz
 
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf.gz \
     --fasta example.fasta.gz \
@@ -71,9 +81,11 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
+```
 
 3. Specifying chromosome name mapping
 
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -82,7 +94,7 @@ python -m vcf_consensus.cli \
     --threshold 0.5 \
     --output consensus.fasta \
     --chrom-map "1=chr1,2=chr2"
-
+```bash
 
 
 
