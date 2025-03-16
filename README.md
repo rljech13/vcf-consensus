@@ -1,5 +1,3 @@
-⸻
-
 README.md
 
 # vcf_consensus
@@ -9,7 +7,6 @@ README.md
 
 Supports both **uncompressed** and **compressed** files (`.vcf.gz`, `.fasta.gz`).
 
----
 
 ## **Installation**
 ### 1. Clone the repository
@@ -25,9 +22,6 @@ source .venv/bin/activate  # Linux/Mac
 
 uv pip install -e .
 
-
-
-⸻
 
 Usage
 
@@ -55,7 +49,6 @@ Argument	Description
 
 
 
-⸻
 
 Examples
 
@@ -92,7 +85,6 @@ python -m vcf_consensus.cli \
 
 
 
-⸻
 
 Project Structure
 
@@ -104,7 +96,7 @@ vcf_consensus/
 │   ├── fasta_parser.py    # FASTA parser
 │   ├── vcf_parser.py      # VCF parser
 │   ├── logger.py          # Logging configuration
-│── tests/                 # Unit tests
+│── tests/                 # Coming soon
 │── README.md              # Project documentation
 │── pyproject.toml         # Package configuration
 │── setup.cfg              # Installation configuration (if needed)
@@ -112,24 +104,10 @@ vcf_consensus/
 
 
 
-⸻
-
-Development
-
-To modify the project, set up the virtual environment and install the package in editable mode:
-
-uv pip install -e .
-
-Run the test suite before committing changes:
-
-pytest tests/
 
 
-
----
 
 License
 
 This project is distributed under the MIT License.
 
----
