@@ -69,7 +69,7 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
-```bash
+```
 
 2. Using .vcf.gz and .fasta.gz
 
@@ -94,7 +94,7 @@ python -m vcf_consensus.cli \
     --threshold 0.5 \
     --output consensus.fasta \
     --chrom-map "1=chr1,2=chr2"
-```bash
+```
 
 
 
