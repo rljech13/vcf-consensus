@@ -14,9 +14,9 @@ git clone https://github.com/yourusername/vcf_consensus.git
 cd vcf_consensus
 ```
 
-2. Install in a virtual environment
+### 2. Install in a virtual environment
 
-```
+```bash
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
@@ -24,13 +24,10 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 ```
 
+##**Usage**
 
-⸻
-
-Usage
-
-Basic execution
-
+### Basic execution
+```bash
 python -m vcf_consensus.cli \
     --vcf input.vcf \
     --fasta reference.fasta \
@@ -38,13 +35,10 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output output_consensus.fasta
-
-
-
-⸻
 ```
-Command-line arguments
 
+### Command-line options
+```
 Argument	Description
 --vcf	Path to the VCF file (supports .vcf.gz).
 --fasta	Path to the FASTA reference genome (supports .fasta.gz).
@@ -57,12 +51,11 @@ Argument	Description
 ```
 
 
-⸻
+## Examples
 
-Examples
+### 1. Basic execution
 
-1. Basic execution
-
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -70,9 +63,11 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
+```
 
-2. Using .vcf.gz and .fasta.gz
+### 2. Using .vcf.gz and .fasta.gz
 
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf.gz \
     --fasta example.fasta.gz \
@@ -80,9 +75,11 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
+```
 
-3. Specifying chromosome name mapping
+### 3. Specifying chromosome name mapping
 
+```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -91,13 +88,11 @@ python -m vcf_consensus.cli \
     --threshold 0.5 \
     --output consensus.fasta \
     --chrom-map "1=chr1,2=chr2"
-
-
-
-⸻
 ```
-Project Structure
 
+
+## Project Structure
+```
 vcf_consensus/
 │── vcf_consensus/
 │   ├── __init__.py
@@ -118,8 +113,3 @@ vcf_consensus/
 License
 
 This project is distributed under the MIT License.
-
----
-
-
-If there are any other issues, let me know! 🚀
