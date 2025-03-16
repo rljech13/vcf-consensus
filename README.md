@@ -1,4 +1,8 @@
-README.md
+Проблема связана с тем, что GitHub не распознал Markdown-разметку из-за неправильных отступов или пробелов. Нужно немного поправить README.md, чтобы таблицы и кодовые блоки отображались правильно.
+
+⸻
+
+Исправленный README.md
 
 # vcf_consensus
 ### Generate Consensus DNA Sequences from VCF and FASTA
@@ -7,32 +11,30 @@ README.md
 
 Supports both **uncompressed** and **compressed** files (`.vcf.gz`, `.fasta.gz`).
 
+---
 
 ## **Installation**
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/vcf_consensus.git
 cd vcf_consensus
-```
 
 2. Install in a virtual environment
-```
+
 python -m venv .venv
-```
-
-```
 source .venv/bin/activate  # Linux/Mac
-```
+# .venv\Scripts\activate   # Windows
 
-```
 uv pip install -e .
-```
 
+
+
+⸻
 
 Usage
 
 Basic execution
-```bash
+
 python -m vcf_consensus.cli \
     --vcf input.vcf \
     --fasta reference.fasta \
@@ -40,7 +42,10 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output output_consensus.fasta
-```
+
+
+
+⸻
 
 Command-line arguments
 
@@ -56,12 +61,12 @@ Argument	Description
 
 
 
+⸻
 
 Examples
 
 1. Basic execution
-   
-```bash
+
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -69,11 +74,9 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
-```
 
 2. Using .vcf.gz and .fasta.gz
 
-```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf.gz \
     --fasta example.fasta.gz \
@@ -81,11 +84,9 @@ python -m vcf_consensus.cli \
     --count 10000 \
     --threshold 0.5 \
     --output consensus.fasta
-```
 
 3. Specifying chromosome name mapping
 
-```bash
 python -m vcf_consensus.cli \
     --vcf example.vcf \
     --fasta example.fasta \
@@ -94,9 +95,10 @@ python -m vcf_consensus.cli \
     --threshold 0.5 \
     --output consensus.fasta \
     --chrom-map "1=chr1,2=chr2"
-```
 
 
+
+⸻
 
 Project Structure
 
@@ -108,7 +110,7 @@ vcf_consensus/
 │   ├── fasta_parser.py    # FASTA parser
 │   ├── vcf_parser.py      # VCF parser
 │   ├── logger.py          # Logging configuration
-│── tests/                 # Coming soon
+│── tests/                 # Unit tests (coming soon)
 │── README.md              # Project documentation
 │── pyproject.toml         # Package configuration
 │── setup.cfg              # Installation configuration (if needed)
@@ -116,10 +118,27 @@ vcf_consensus/
 
 
 
+⸻
+
+Development
+
+To modify the project, set up the virtual environment and install the package in editable mode:
+
+uv pip install -e .
+
+Run the test suite before committing changes:
+
+pytest tests/
 
 
+
+⸻
 
 License
 
 This project is distributed under the MIT License.
 
+---
+
+
+If there are any other issues, let me know! 🚀
