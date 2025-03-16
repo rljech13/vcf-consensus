@@ -90,26 +90,6 @@ python -m vcf_consensus.cli \
     --chrom-map "1=chr1,2=chr2"
 ```
 
-
-## Project Structure
-```
-vcf_consensus/
-│── vcf_consensus/
-│   ├── __init__.py
-│   ├── cli.py             # CLI interface
-│   ├── consensus.py       # Consensus sequence generation
-│   ├── fasta_parser.py    # FASTA parser
-│   ├── vcf_parser.py      # VCF parser
-│   ├── logger.py          # Logging configuration
-│── tests/                 # Unit tests (coming soon)
-│── README.md              # Project documentation
-│── pyproject.toml         # Package configuration
-│── .gitignore             # Excluded files (virtual environment, logs)
-```
-
-
-
-
 License
 
 This project is distributed under the MIT License.
