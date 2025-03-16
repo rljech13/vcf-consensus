@@ -1,9 +1,3 @@
-Проблема связана с тем, что GitHub не распознал Markdown-разметку из-за неправильных отступов или пробелов. Нужно немного поправить README.md, чтобы таблицы и кодовые блоки отображались правильно.
-
-⸻
-
-Исправленный README.md
-
 # vcf_consensus
 ### Generate Consensus DNA Sequences from VCF and FASTA
 
@@ -48,7 +42,7 @@ python -m vcf_consensus.cli \
 
 
 ⸻
-
+```
 Command-line arguments
 
 Argument	Description
@@ -60,7 +54,7 @@ Argument	Description
 --output	Output FASTA file for consensus sequences.
 --seed	Random seed for reproducibility (default: None).
 --chrom-map	Manually specify chromosome name mapping if VCF and FASTA names do not match (e.g., "1=chr1,2=chr2").
-
+```
 
 
 ⸻
@@ -101,7 +95,7 @@ python -m vcf_consensus.cli \
 
 
 ⸻
-
+```
 Project Structure
 
 vcf_consensus/
@@ -116,7 +110,7 @@ vcf_consensus/
 │── README.md              # Project documentation
 │── pyproject.toml         # Package configuration
 │── .gitignore             # Excluded files (virtual environment, logs)
-
+```
 
 
 
