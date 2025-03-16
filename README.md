@@ -18,15 +18,17 @@ Supports both **uncompressed** and **compressed** files (`.vcf.gz`, `.fasta.gz`)
 ```bash
 git clone https://github.com/yourusername/vcf_consensus.git
 cd vcf_consensus
+```
 
 2. Install in a virtual environment
 
+```
 python -m venv .venv
 source .venv/bin/activate  # Linux/Mac
 # .venv\Scripts\activate   # Windows
 
 uv pip install -e .
-
+```
 
 
 ⸻
@@ -113,26 +115,11 @@ vcf_consensus/
 │── tests/                 # Unit tests (coming soon)
 │── README.md              # Project documentation
 │── pyproject.toml         # Package configuration
-│── setup.cfg              # Installation configuration (if needed)
 │── .gitignore             # Excluded files (virtual environment, logs)
 
 
 
-⸻
 
-Development
-
-To modify the project, set up the virtual environment and install the package in editable mode:
-
-uv pip install -e .
-
-Run the test suite before committing changes:
-
-pytest tests/
-
-
-
-⸻
 
 License
 
