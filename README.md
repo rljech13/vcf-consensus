@@ -51,11 +51,16 @@ python -m vcf_consensus.cli \
 --fasta	        Path to the FASTA reference genome (supports .fasta.gz).
 --length	    Length of each consensus sequence.
 --count	        Number of consensus sequences to generate.
---threshold	    Allele frequency threshold for variant inclusion (default: 0.0).
+--threshold     Probability of using an alternative allele when present in the VCF (default: 0.0). 
+                A value of 0.5 means that 50% of heterozygous positions will use an alternative allele.
 --output	    Output FASTA file for consensus sequences.
 --seed	        Random seed for reproducibility (default: None).
---chrom-map	    Manually specify chromosome name mapping if VCF and FASTA names do not match (e.g., "1=chr1,2=chr2").
---mode          Select start position choice mode (default: random)
+--chrom-map     (Optinal) Manual chromosome name mapping if VCF and FASTA names differ (e.g., "1=chr1,2=chr2").
+                Use this only if chromosomes in the VCF do not match those in the FASTA.
+--mode          Method for selecting consensus start positions (default: random). 
+                Options:
+                  - "random": Randomly selects start positions.
+                  - "sequential": Selects positions sequentially with 50% overlap.
 ```
 
 
@@ -97,6 +102,12 @@ python -m vcf_consensus.cli \
     --output consensus.fasta \
     --chrom-map "1=chr1,2=chr2"
 ```
+
+## Performance Considerations
+
+- Large FASTA files (>3 GB) are fully loaded into memory. Might change later
+- Large VCF files (>10 million variants) may cause high memory usage.
+- If you experience slow performance, reduce --count or increase --length to reduce the number of consensus sequences.
 
 License
 

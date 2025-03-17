@@ -2,66 +2,68 @@ import gzip
 from vcf_consensus.logger import logger
 
 class FASTAParser:
-    """Parses a FASTA file (supports .fasta and .fasta.gz) and stores sequences in memory."""
+    """Parses a FASTA file (supports .fasta and .fasta.gz) efficiently."""
 
     def __init__(self, fasta_path):
         """
-        Initializes the FASTAParser and loads sequences.
+        Initializes the FASTAParser and indexes chromosome positions.
 
         Args:
             fasta_path (str): Path to the FASTA file (supports .fasta and .fasta.gz).
         """
         self.fasta_path = fasta_path
-        self.sequences = {}
-        self.fasta_chromosomes = set()
-        self._parse_fasta()
+        self.index = {}  # Stores chromosome start positions
+        self._parse_fasta_headers()
 
     def _open_file(self):
         """Opens a FASTA file, handling both .fasta and .fasta.gz formats."""
-        if self.fasta_path.endswith(".gz"):
-            return gzip.open(self.fasta_path, "rt", encoding="utf-8")
-        return open(self.fasta_path, "r", encoding="utf-8")
+        return gzip.open(self.fasta_path, "rt", encoding="utf-8") if self.fasta_path.endswith(".gz") else open(self.fasta_path, "r", encoding="utf-8")
 
-    def _parse_fasta(self):
-        """Internal method to parse the FASTA file and store sequences."""
-        logger.info(f"Loading FASTA: {self.fasta_path}")
-        current_chrom = None
-        current_seq = []
+    def _parse_fasta_headers(self):
+        """Indexes FASTA headers to enable efficient sequence extraction."""
+        logger.info(f"Indexing FASTA: {self.fasta_path}")
 
         with self._open_file() as f:
+            position = 0
+            chrom = None
             for line in f:
-                line = line.strip()
                 if line.startswith(">"):
-                    if current_chrom:
-                        self.sequences[current_chrom] = "".join(current_seq)
-                    current_chrom = line[1:].split()[0]
-                    current_seq = []
-                else:
-                    current_seq.append(line)
+                    chrom = line[1:].split()[0]
+                    self.index[chrom] = position
+                position += len(line)
 
-        if current_chrom:
-            self.sequences[current_chrom] = "".join(current_seq)
-
-        self.fasta_chromosomes = set(self.sequences.keys())
-        logger.info(f"Loaded {len(self.fasta_chromosomes)} chromosomes from FASTA")
+        logger.info(f"Indexed {len(self.index)} chromosomes from FASTA.")
 
     def get_sequence(self, chrom, start=0, length=None):
-        """
-        Retrieves a sequence from the FASTA file.
+        """Extracts a sequence from the FASTA file efficiently.
 
         Args:
             chrom (str): Chromosome name.
             start (int): Start position.
-            length (int, optional): Length of sequence. If None, returns the full chromosome.
+            length (int, optional): Length of sequence.
 
         Returns:
-            str: The extracted sequence.
+            str: Extracted DNA sequence.
         """
-        sequence = self.sequences.get(chrom, "")
-        if length is None:
-            return sequence[start:]
-        return sequence[start:start + length]
+        if chrom not in self.index:
+            raise ValueError(f"Chromosome {chrom} not found in FASTA!")
+
+        sequence = []
+        reading = False
+
+        with self._open_file() as f:
+            for line in f:
+                if line.startswith(">"):
+                    reading = line[1:].split()[0] == chrom
+                    continue
+                if reading:
+                    sequence.append(line.strip())
+                    if length and len("".join(sequence)) >= start + length:
+                        break
+
+        full_seq = "".join(sequence)
+        return full_seq[start:start + length] if length else full_seq
 
     def get_chromosomes(self):
-        """Returns a set of chromosome names from the FASTA file."""
-        return self.fasta_chromosomes
+        """Returns the indexed chromosome names."""
+        return set(self.index.keys())

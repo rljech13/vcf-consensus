@@ -33,41 +33,36 @@ def main():
     parser.add_argument("--fasta", required=True, help="Path to the FASTA reference genome.")
     parser.add_argument("--length", type=int, required=True, help="Length of consensus sequences.")
     parser.add_argument("--count", type=int, required=True, help="Number of consensus sequences to generate.")
-    parser.add_argument("--threshold", type=float, default=0.0, help="Allele frequency threshold for variant inclusion.")
+    parser.add_argument("--threshold", type=float, default=0.5, help="Allele frequency threshold for variant inclusion.")
     parser.add_argument("--output", required=True, help="Output FASTA file for consensus sequences.")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility.")
     parser.add_argument("--chrom-map", type=str, help="Manual chromosome name mapping (e.g., '1=chr1,2=chr2').")
     parser.add_argument("--mode", type=str, choices=["random", "sequential"], default="random",
-                        help="Mode of consensus sequence generation: 'random' (default) or 'sequential'.")
+                        help="Mode of consensus sequence generation.")
 
     args = parser.parse_args()
+    chrom_map = parse_chrom_map(args.chrom_map)
 
     logger.info("Running with parameters:")
     for k, v in vars(args).items():
         logger.info(f"    {k}: {v}")
 
-    chrom_map = parse_chrom_map(args.chrom_map)
-
     start_time = time.perf_counter()
 
-    try:
-        generate_consensus_sequences(
-            vcf_path=args.vcf,
-            fasta_path=args.fasta,
-            length=args.length,
-            count=args.count,
-            threshold=args.threshold,
-            output_path=args.output,
-            seed=args.seed,
-            chrom_map=chrom_map,
-            mode=args.mode
-        )
-    except Exception as e:
-        logger.error(f"An error occurred: {e}")
-        exit(1)
+    generate_consensus_sequences(
+        vcf_path=args.vcf,
+        fasta_path=args.fasta,
+        length=args.length,
+        count=args.count,
+        threshold=args.threshold,
+        output_path=args.output,
+        seed=args.seed,
+        chrom_map=chrom_map,
+        mode=args.mode
+    )
 
     elapsed_time = time.perf_counter() - start_time
-    logger.info(f"Finished! Consensus sequences saved in {elapsed_time:.2f} seconds.")
+    logger.info(f"Finished in {elapsed_time:.2f} seconds.")
 
 if __name__ == "__main__":
     main()
