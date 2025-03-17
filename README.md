@@ -49,11 +49,11 @@ python -m vcf_consensus.cli \
 ```
 --vcf	        Path to the VCF file (supports .vcf.gz).
 --fasta	        Path to the FASTA reference genome (supports .fasta.gz).
---length	    Length of each consensus sequence.
+--length	Length of each consensus sequence.
 --count	        Number of consensus sequences to generate.
 --threshold     Probability of using an alternative allele when present in the VCF (default: 0.0). 
                 A value of 0.5 means that 50% of heterozygous positions will use an alternative allele.
---output	    Output FASTA file for consensus sequences.
+--output	Output FASTA file for consensus sequences.
 --seed	        Random seed for reproducibility (default: None).
 --chrom-map     (Optinal) Manual chromosome name mapping if VCF and FASTA names differ (e.g., "1=chr1,2=chr2").
                 Use this only if chromosomes in the VCF do not match those in the FASTA.
