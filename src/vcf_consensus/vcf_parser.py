@@ -1,22 +1,17 @@
 import gzip
+import random
 from collections import defaultdict
 from vcf_consensus.logger import logger
 
 class VCFParser:
-    """Parses a VCF file (supports .vcf and .vcf.gz) and stores variants in a dictionary.
-    
-    Attributes:
-        vcf_data (dict): Parsed variant data {chrom: {position: variant_info}}.
-        fasta_chromosomes (set): Set of chromosome names from the FASTA reference.
-        chrom_map (dict): Optional mapping for chromosome names.
-    """
+    """Efficiently parses a VCF file (supports .vcf and .vcf.gz) and processes only relevant chromosomes."""
 
     def __init__(self, vcf_path, fasta_chromosomes, chrom_map=None):
         """
-        Initializes the VCFParser and loads variant data.
+        Initializes the VCFParser.
 
         Args:
-            vcf_path (str): Path to the VCF file (supports .vcf and .vcf.gz).
+            vcf_path (str): Path to the VCF file.
             fasta_chromosomes (set): Chromosome names from the FASTA reference.
             chrom_map (dict, optional): Mapping of VCF chromosome names to FASTA names.
         """
@@ -25,8 +20,18 @@ class VCFParser:
         self.chrom_map = chrom_map or {}
         self.vcf_data = defaultdict(dict)
         self.vcf_chromosomes = set()
-
+        
+        self._check_empty_file()
         self._parse_vcf()
+
+    def _check_empty_file(self):
+        """Checks if the VCF file is empty and raises an error if so."""
+        with self._open_file() as f:
+            for line in f:
+                if not line.startswith("#"):
+                    return  # File is not empty
+        logger.error(f"VCF file {self.vcf_path} is empty. Exiting.")
+        raise ValueError("Empty VCF file provided.")
 
     def _open_file(self):
         """Opens a VCF file, handling both .vcf and .vcf.gz formats."""
@@ -35,28 +40,34 @@ class VCFParser:
         return open(self.vcf_path, "r", encoding="utf-8")
 
     def _parse_vcf(self):
-        """Internal method to parse the VCF file and store data in a dictionary."""
+        """Parses the VCF file and loads only the variants relevant to the given FASTA reference."""
         logger.info(f"Loading VCF: {self.vcf_path}")
+        
         with self._open_file() as f:
             for line in f:
                 if line.startswith("#"):
                     continue
 
                 fields = line.strip().split("\t")
-                chrom, pos, _, ref, alt, _, _, _, _, *samples = fields
+                chrom, pos, _, ref, alt, _, _, _, format_info, *samples = fields
                 pos = int(pos)
                 alts = alt.split(",")
-
-                self.vcf_chromosomes.add(chrom)
-
-                
+              
                 if chrom in self.chrom_map:
                     chrom = self.chrom_map[chrom]
+
+                if chrom not in self.fasta_chromosomes:
+                    continue
+                
+                self.vcf_chromosomes.add(chrom)
+
+                sample_index = random.randint(0, len(samples) - 1)
+                selected_sample = samples[sample_index]
 
                 self.vcf_data[chrom][pos] = {
                     "REF": ref,
                     "ALT": alts,
-                    "samples": samples
+                    "sample": selected_sample
                 }
 
         self._validate_chromosomes()

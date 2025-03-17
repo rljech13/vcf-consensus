@@ -61,7 +61,7 @@ def get_consensus_positions(fasta_parser, chrom, length, count, mode="random"):
     return sorted(positions)
 
 def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, threshold):
-    """Generates a single consensus sequence, handling SNPs and indels.
+    """Generates a single consensus sequence using only one sample's alleles.
 
     Args:
         fasta_parser (FASTAParser): FASTA file parser.
@@ -80,30 +80,35 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
     if chrom not in vcf_data:
         return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
 
-    all_samples = list(vcf_data[chrom].values())[0]["samples"]
-    sample_id = random.choice(range(len(all_samples)))
-
+    # Get only the variants in the selected region
     variants_in_range = {pos: vcf_data[chrom][pos] for pos in range(start, start + length) if pos in vcf_data[chrom]}
 
-    shift = 0  # this is for indels
+    shift = 0  # For tracking insertions and deletions
 
     for pos, variant in sorted(variants_in_range.items()):
         ref_allele = variant["REF"]
         alt_alleles = variant["ALT"]
-        genotype = variant["samples"][sample_id]
-        alleles = genotype.split("/")
+        sample_allele = variant["sample"]
 
+        # Use only the selected sample's allele
         selected_allele = ref_allele
-        if "1" in alleles and random.random() < threshold:
+        if "1" in sample_allele.split("/") and random.random() < threshold:
             selected_allele = random.choice(alt_alleles)
 
         index = pos - start + shift
 
-        if len(selected_allele) > len(ref_allele):  # insertion
+        fasta_base = consensus[index:index + len(ref_allele)]  # Extract current base(s) in FASTA
+
+        # Handle ambiguous bases in FASTA (e.g., N, Y, R)
+        if len(fasta_base) != len(ref_allele) or any(base not in "ACGT" for base in fasta_base):
+            logger.warning(f"Ambiguous base detected at {chrom}:{pos}, keeping reference.")
+            continue  # Skip modification if FASTA contains uncertainty
+
+        if len(selected_allele) > len(ref_allele):  # Insertion
             consensus[index] = selected_allele
             shift += len(selected_allele) - len(ref_allele)
 
-        elif len(selected_allele) < len(ref_allele):  # deletion
+        elif len(selected_allele) < len(ref_allele):  # Deletion
             del consensus[index : index + len(ref_allele)]
             shift -= len(ref_allele) - len(selected_allele)
 
