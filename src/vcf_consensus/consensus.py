@@ -37,7 +37,7 @@ def generate_single_consensus(fasta_parser, vcf_parser, length, threshold):
 
     consensus = list(fasta_parser.get_sequence(chrom, start, length))
 
-    # Выбираем случайный образец для всей последовательности
+   
     vcf_data = vcf_parser.get_variants()
     if chrom not in vcf_data:
         return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
@@ -45,14 +45,14 @@ def generate_single_consensus(fasta_parser, vcf_parser, length, threshold):
     all_samples = list(vcf_data[chrom].values())[0]["samples"]
     sample_id = random.choice(range(len(all_samples)))  
 
-    # Кэшируем позиции VCF
+    
     variants_in_range = {pos: vcf_data[chrom][pos] for pos in range(start, start + length) if pos in vcf_data[chrom]}
 
     for pos, variant in variants_in_range.items():
         alt_alleles = variant["ALT"]
         ref_allele = variant["REF"]
 
-        # Проверяем, несёт ли выбранный образец вариант
+        
         genotype = variant["samples"][sample_id]
         alleles = genotype.split("/")
 
@@ -60,7 +60,7 @@ def generate_single_consensus(fasta_parser, vcf_parser, length, threshold):
         if "1" in alleles and random.random() < threshold:
             selected_allele = random.choice(alt_alleles)
 
-        consensus[pos - start] = selected_allele  # Быстрое изменение списка
+        consensus[pos - start] = selected_allele  
 
     return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
 
@@ -91,7 +91,7 @@ def generate_consensus_sequences(vcf_path, fasta_path, length, count, threshold,
         output_sequences.append(consensus)
         logger.info(f"Generated consensus {i + 1}/{count}")
 
-    # Записываем результат в файл
+    
     with open(output_path, "w") as f:
         f.write("\n".join(output_sequences) + "\n")
 

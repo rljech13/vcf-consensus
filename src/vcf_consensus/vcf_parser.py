@@ -49,7 +49,7 @@ class VCFParser:
 
                 self.vcf_chromosomes.add(chrom)
 
-                # Apply chromosome name mapping if provided
+                
                 if chrom in self.chrom_map:
                     chrom = self.chrom_map[chrom]
 
@@ -65,7 +65,7 @@ class VCFParser:
         """Checks for mismatches between VCF and FASTA chromosome names."""
         unmatched_chroms = self.vcf_chromosomes - self.fasta_chromosomes
         if unmatched_chroms:
-            logger.warning("⚠️ Chromosome names in VCF do not match FASTA reference!")
+            logger.warning("Chromosome names in VCF do not match FASTA reference!")
             logger.warning(f"VCF chromosomes: {self.vcf_chromosomes}")
             logger.warning(f"FASTA chromosomes: {self.fasta_chromosomes}")
             logger.warning(f"Unmatched chromosomes: {unmatched_chroms}")
