@@ -47,15 +47,15 @@ python -m vcf_consensus.cli \
 
 ### Command-line options
 ```
-Argument	Description
---vcf	Path to the VCF file (supports .vcf.gz).
---fasta	Path to the FASTA reference genome (supports .fasta.gz).
---length	Length of each consensus sequence.
---count	Number of consensus sequences to generate.
---threshold	Allele frequency threshold for variant inclusion (default: 0.0).
---output	Output FASTA file for consensus sequences.
---seed	Random seed for reproducibility (default: None).
---chrom-map	Manually specify chromosome name mapping if VCF and FASTA names do not match (e.g., "1=chr1,2=chr2").
+--vcf	        Path to the VCF file (supports .vcf.gz).
+--fasta	        Path to the FASTA reference genome (supports .fasta.gz).
+--length	    Length of each consensus sequence.
+--count	        Number of consensus sequences to generate.
+--threshold	    Allele frequency threshold for variant inclusion (default: 0.0).
+--output	    Output FASTA file for consensus sequences.
+--seed	        Random seed for reproducibility (default: None).
+--chrom-map	    Manually specify chromosome name mapping if VCF and FASTA names do not match (e.g., "1=chr1,2=chr2").
+--mode          Select start position choice mode (default: random)
 ```
 
 
