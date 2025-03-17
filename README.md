@@ -8,6 +8,14 @@ Supports both **uncompressed** and **compressed** files (`.vcf.gz`, `.fasta.gz`)
 ---
 
 ## **Installation**
+
+### **!Make sure that you have uv installed in your system, current version uses it as a package manager!**
+
+```bash
+pip install uv 
+```
+(in case you don't have one)
+
 ### 1. Clone the repository
 ```bash
 git clone https://github.com/yourusername/vcf_consensus.git
@@ -24,7 +32,7 @@ source .venv/bin/activate  # Linux/Mac
 uv pip install -e .
 ```
 
-##**Usage**
+## **Usage**
 
 ### Basic execution
 ```bash

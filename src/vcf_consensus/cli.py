@@ -37,6 +37,8 @@ def main():
     parser.add_argument("--output", required=True, help="Output FASTA file for consensus sequences.")
     parser.add_argument("--seed", type=int, default=None, help="Random seed for reproducibility.")
     parser.add_argument("--chrom-map", type=str, help="Manual chromosome name mapping (e.g., '1=chr1,2=chr2').")
+    parser.add_argument("--mode", type=str, choices=["random", "sequential"], default="random",
+                        help="Mode of consensus sequence generation: 'random' (default) or 'sequential'.")
 
     args = parser.parse_args()
 
@@ -57,7 +59,8 @@ def main():
             threshold=args.threshold,
             output_path=args.output,
             seed=args.seed,
-            chrom_map=chrom_map
+            chrom_map=chrom_map,
+            mode=args.mode
         )
     except Exception as e:
         logger.error(f"An error occurred: {e}")
