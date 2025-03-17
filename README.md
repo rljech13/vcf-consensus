@@ -105,9 +105,12 @@ python -m vcf_consensus.cli \
 
 ## Performance Considerations
 
-- Large FASTA files (>3 GB) are fully loaded into memory. Might change later
-- Large VCF files (>10 million variants) may cause high memory usage.
+- FASTA files are fully loaded into memory. It may cause problems if FASTA is more than 3 GB.
+- Large VCF files (>10 million variants) may cause high memory usage. Same problem as above.
 - If you experience slow performance, reduce --count or increase --length to reduce the number of consensus sequences.
+- Problem with unmatching CHROM and > still remains
+
+!Wait for the upcoming fixes)
 
 License
 
