@@ -72,7 +72,6 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
     """
     ref_sequence = bytearray(fasta_parser.get_sequence(chrom, start, length), "utf-8")
 
-    # Используем оптимизированный `get_variants`, который сразу фильтрует по start, end
     variants_in_range = vcf_parser.get_variants(chrom, start, start + length)
 
     if not variants_in_range:
@@ -84,7 +83,7 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
         return f">consensus_{chrom}_{start}\n{ref_sequence.decode('utf-8')}"
 
     selected_sample = random.choice(sample_names)
-    shift = 0  # Корректировка позиций из-за инделов
+    shift = 0  
 
     for pos, variant in sorted(variants_in_range.items()):
         ref_allele = variant["REF"]
@@ -97,7 +96,7 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
         genotype = sample_data[selected_sample]
         alleles = genotype.split("/")
 
-        if all(a == "0" for a in alleles):  # Гомозиготный референс (0/0)
+        if all(a == "0" for a in alleles):  
             continue
 
         alt_indices = [int(a) for a in alleles if a.isdigit()]
@@ -106,18 +105,17 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
 
         selected_allele = ref_allele
         if any(a > 0 and random.random() < threshold for a in alt_indices):
-            selected_allele = alt_alleles[max(alt_indices) - 1]  # Берем наиболее частый ALT
+            selected_allele = alt_alleles[max(alt_indices) - 1] 
 
         index = pos - start + shift
         if not (0 <= index < len(ref_sequence)):
             continue
 
-        # Обработка SNP, инсерций и делеций
-        if len(selected_allele) > len(ref_allele):  # Инсерция
+        if len(selected_allele) > len(ref_allele):  # Insertion
             ref_sequence[index:index+len(ref_allele)] = bytearray(selected_allele, "utf-8")
             shift += len(selected_allele) - len(ref_allele)
 
-        elif len(selected_allele) < len(ref_allele):  # Делеция
+        elif len(selected_allele) < len(ref_allele):  # Deletion
             del ref_sequence[index : index + len(ref_allele)]
             shift -= len(ref_allele) - len(selected_allele)
 
