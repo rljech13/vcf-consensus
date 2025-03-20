@@ -1,5 +1,6 @@
 import argparse
 import time
+import sys
 from vcf_consensus.consensus import generate_consensus_sequences
 from vcf_consensus.logger import logger
 
@@ -21,14 +22,17 @@ def parse_chrom_map(chrom_map_str):
             vcf_chrom, fasta_chrom = mapping.split("=")
             chrom_map[vcf_chrom] = fasta_chrom
     except ValueError:
-        logger.error("Invalid format for --chrom-map. Use '1=chr1,2=chr2'")
-        exit(1)
+        logger.error("Invalid format for --chrom-map. Use '1=chr1,2=chr2'. Example: '1=chr1,2=chr2'")
+        sys.exit(1)
 
     return chrom_map
 
 def main():
     """CLI entry point for the vcf_consensus package."""
-    parser = argparse.ArgumentParser(description="Generate consensus sequences from VCF and FASTA.")
+    
+    parser = argparse.ArgumentParser(
+        description="Generate consensus sequences from VCF and FASTA."
+    )
     parser.add_argument("--vcf", required=True, help="Path to the VCF file.")
     parser.add_argument("--fasta", required=True, help="Path to the FASTA reference genome.")
     parser.add_argument("--length", type=int, required=True, help="Length of consensus sequences.")
@@ -39,9 +43,17 @@ def main():
     parser.add_argument("--chrom-map", type=str, help="Manual chromosome name mapping (e.g., '1=chr1,2=chr2').")
     parser.add_argument("--mode", type=str, choices=["random", "sequential"], default="random",
                         help="Mode of consensus sequence generation.")
+    parser.add_argument("--log", type=str, default=None, help="Log output to a file instead of stderr.")
 
     args = parser.parse_args()
     chrom_map = parse_chrom_map(args.chrom_map)
+
+    if args.log:
+        import logging
+        file_handler = logging.FileHandler(args.log, mode="w")
+        formatter = logging.Formatter("[%(asctime)s] [%(levelname)s]: %(message)s")
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
 
     logger.info("Running with parameters:")
     for k, v in vars(args).items():
@@ -49,17 +61,21 @@ def main():
 
     start_time = time.perf_counter()
 
-    generate_consensus_sequences(
-        vcf_path=args.vcf,
-        fasta_path=args.fasta,
-        length=args.length,
-        count=args.count,
-        threshold=args.threshold,
-        output_path=args.output,
-        seed=args.seed,
-        chrom_map=chrom_map,
-        mode=args.mode
-    )
+    try:
+        generate_consensus_sequences(
+            vcf_path=args.vcf,
+            fasta_path=args.fasta,
+            length=args.length,
+            count=args.count,
+            threshold=args.threshold,
+            output_path=args.output,
+            seed=args.seed,
+            chrom_map=chrom_map,
+            mode=args.mode
+        )
+    except Exception as e:
+        logger.error(f"Error encountered: {e}")
+        sys.exit(1)
 
     elapsed_time = time.perf_counter() - start_time
     logger.info(f"Finished in {elapsed_time:.2f} seconds.")

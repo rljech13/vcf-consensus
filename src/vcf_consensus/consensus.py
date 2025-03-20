@@ -1,12 +1,11 @@
 import random
-from collections import defaultdict
 from vcf_consensus.fasta_parser import FASTAParser
 from vcf_consensus.vcf_parser import VCFParser
 from vcf_consensus.logger import logger
 
 
 def load_data(vcf_path, fasta_path, chrom_map):
-    """Loads FASTA and VCF data using object-oriented parsing.
+    """Loads FASTA and VCF data using optimized indexing.
 
     Args:
         vcf_path (str): Path to the VCF file.
@@ -22,81 +21,70 @@ def load_data(vcf_path, fasta_path, chrom_map):
 
 
 def get_consensus_positions(fasta_parser, chrom, length, count, mode="random"):
-    """Generates start positions for consensus sequences.
-
-    Ensures unique positions and limits count to available positions in `sequential` mode.
+    """Generates start positions for consensus sequences efficiently.
 
     Args:
-        fasta_parser (FASTAParser): Object for FASTA access.
+        fasta_parser (FASTAParser): FASTA parser with indexed sequences.
         chrom (str): Chromosome name.
         length (int): Length of consensus sequences.
-        count (int): Number of consensus sequences.
-        mode (str): "random" (random starts) or "sequential" (ordered starts).
+        count (int): Number of sequences to generate.
+        mode (str): "random" (randomized start positions) or "sequential" (ordered).
 
     Returns:
-        list: List of unique start positions.
+        list: List of start positions.
     """
-    chrom_length = len(fasta_parser.get_sequence(chrom, 0, None))
+    chrom_length = fasta_parser.get_chromosome_length(chrom)
 
     if chrom_length < length:
-        logger.warning(f"Chromosome {chrom} is too short for the requested consensus length ({chrom_length} < {length}). Skipping.")
+        logger.warning(f"Chromosome {chrom} is too short for requested consensus length. Skipping.")
         return []
 
-    positions = []
-    step = length // 2  # Default to 50% overlap
+    positions = set()
+    step = length // 2  # 50% overlap
 
     if mode == "random":
-        attempts = 0
         while len(positions) < count:
             start = random.randint(0, chrom_length - length)
-            if start not in positions:
-                positions.append(start)
-            attempts += 1
-            if attempts > count * 10:
-                logger.warning(f"Could not generate enough unique positions for {chrom}. Using {len(positions)} instead of {count}.")
+            positions.add(start)
+            if len(positions) >= count:
                 break
 
     elif mode == "sequential":
         positions = list(range(0, chrom_length - length + 1, step))
-        if len(positions) < count:
-            logger.warning(f"Only {len(positions)} positions available for {chrom}, requested {count}. Using {len(positions)}.")
-
         positions = positions[:min(count, len(positions))]
 
     return sorted(positions)
 
 
 def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, threshold):
-    """Generates a single consensus sequence, handling SNPs and indels.
+    """Generates a single consensus sequence with correct SNPs and indels.
 
     Args:
-        fasta_parser (FASTAParser): FASTA file parser.
-        vcf_parser (VCFParser): VCF file parser.
+        fasta_parser (FASTAParser): Indexed FASTA parser.
+        vcf_parser (VCFParser): Indexed VCF parser.
         chrom (str): Chromosome name.
         start (int): Start position.
-        length (int): Length of the consensus sequence.
+        length (int): Length of the sequence.
         threshold (float): Allele frequency threshold.
 
     Returns:
-        str: Formatted consensus sequence in FASTA format.
+        str: FASTA-formatted consensus sequence.
     """
-    consensus = list(fasta_parser.get_sequence(chrom, start, length))
+    ref_sequence = bytearray(fasta_parser.get_sequence(chrom, start, length), "utf-8")
 
-    vcf_data = vcf_parser.get_variants()
-    if chrom not in vcf_data:
-        return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
+    # Используем оптимизированный `get_variants`, который сразу фильтрует по start, end
+    variants_in_range = vcf_parser.get_variants(chrom, start, start + length)
 
-    sample_variants = [variant["samples"] for variant in vcf_data[chrom].values()]
-    sample_names = list(set().union(*sample_variants))
+    if not variants_in_range:
+        return f">consensus_{chrom}_{start}\n{ref_sequence.decode('utf-8')}"
 
+    sample_names = vcf_parser.get_sample_names()
     if not sample_names:
-        logger.warning(f"No samples found for {chrom}. Using reference sequence.")
-        return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
+        logger.warning(f"No samples found in VCF for {chrom}. Keeping reference sequence.")
+        return f">consensus_{chrom}_{start}\n{ref_sequence.decode('utf-8')}"
 
     selected_sample = random.choice(sample_names)
-    variants_in_range = {pos: vcf_data[chrom][pos] for pos in range(start, start + length) if pos in vcf_data[chrom]}
-
-    shift = 0  # Track insertions and deletions
+    shift = 0  # Корректировка позиций из-за инделов
 
     for pos, variant in sorted(variants_in_range.items()):
         ref_allele = variant["REF"]
@@ -109,43 +97,50 @@ def generate_single_consensus(fasta_parser, vcf_parser, chrom, start, length, th
         genotype = sample_data[selected_sample]
         alleles = genotype.split("/")
 
-        selected_allele = ref_allele
-        if "1" in alleles and random.random() < threshold:
-            selected_allele = random.choice(alt_alleles)
-
-        index = pos - start + shift
-        if not (0 <= index < len(consensus)):
+        if all(a == "0" for a in alleles):  # Гомозиготный референс (0/0)
             continue
 
-        if len(selected_allele) > len(ref_allele):  # Insertion
-            consensus[index] = selected_allele
+        alt_indices = [int(a) for a in alleles if a.isdigit()]
+        if not alt_indices:
+            continue
+
+        selected_allele = ref_allele
+        if any(a > 0 and random.random() < threshold for a in alt_indices):
+            selected_allele = alt_alleles[max(alt_indices) - 1]  # Берем наиболее частый ALT
+
+        index = pos - start + shift
+        if not (0 <= index < len(ref_sequence)):
+            continue
+
+        # Обработка SNP, инсерций и делеций
+        if len(selected_allele) > len(ref_allele):  # Инсерция
+            ref_sequence[index:index+len(ref_allele)] = bytearray(selected_allele, "utf-8")
             shift += len(selected_allele) - len(ref_allele)
 
-        elif len(selected_allele) < len(ref_allele):  # Deletion
-            del consensus[index : index + len(ref_allele)]
+        elif len(selected_allele) < len(ref_allele):  # Делеция
+            del ref_sequence[index : index + len(ref_allele)]
             shift -= len(ref_allele) - len(selected_allele)
 
         else:  # SNP
-            consensus[index] = selected_allele
+            ref_sequence[index:index + len(ref_allele)] = bytearray(selected_allele, "utf-8")
 
-    return f">consensus_{chrom}_{start}\n{''.join(consensus)}"
-
+    return f">consensus_{chrom}_{start}\n{ref_sequence.decode('utf-8')}"
 
 def generate_consensus_sequences(
     vcf_path, fasta_path, length, count, threshold, output_path, seed=None, chrom_map=None, mode="random"
 ):
-    """Generates consensus sequences from VCF and FASTA.
+    """Generates consensus sequences from VCF and FASTA with optimized performance.
 
     Args:
         vcf_path (str): Path to the VCF file.
         fasta_path (str): Path to the FASTA reference genome.
-        length (int): Length of each consensus sequence.
-        count (int): Number of consensus sequences to generate.
-        threshold (float): Allele frequency threshold for variant inclusion.
+        length (int): Length of consensus sequences.
+        count (int): Number of sequences to generate.
+        threshold (float): Allele frequency threshold.
         output_path (str): Path to the output FASTA file.
         seed (int, optional): Random seed for reproducibility.
-        chrom_map (dict, optional): Mapping of VCF chromosome names to FASTA chromosome names.
-        mode (str, optional): "random" or "sequential" (consensus start mode).
+        chrom_map (dict, optional): Chromosome name mapping.
+        mode (str, optional): "random" or "sequential".
     """
     if seed:
         random.seed(seed)
@@ -155,7 +150,8 @@ def generate_consensus_sequences(
     fasta_parser, vcf_parser = load_data(vcf_path, fasta_path, chrom_map)
     output_sequences = []
 
-    valid_chromosomes = list(fasta_parser.get_chromosomes() & vcf_parser.get_variants().keys())
+    # Используем vcf_parser.index.keys(), т.к. get_variants() требует chrom, start, end
+    valid_chromosomes = list(fasta_parser.get_chromosomes() & vcf_parser.index.keys())
 
     if not valid_chromosomes:
         logger.error("No matching chromosomes between FASTA and VCF!")

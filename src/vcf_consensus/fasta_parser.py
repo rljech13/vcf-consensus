@@ -1,69 +1,79 @@
+import mmap
 import gzip
 from vcf_consensus.logger import logger
 
 class FASTAParser:
-    """Parses a FASTA file (supports .fasta and .fasta.gz) efficiently."""
+    """Parses a FASTA file using memory-mapped access for efficient sequence extraction."""
 
     def __init__(self, fasta_path):
         """
-        Initializes the FASTAParser and indexes chromosome positions.
+        Initializes the FASTAParser and maps the FASTA file into memory.
 
         Args:
-            fasta_path (str): Path to the FASTA file (supports .fasta and .fasta.gz).
+            fasta_path (str): Path to the FASTA file.
         """
         self.fasta_path = fasta_path
-        self.index = {}  # Stores chromosome start positions
+        self.index = {}
+        self.mmap_file = None
         self._parse_fasta_headers()
 
     def _open_file(self):
-        """Opens a FASTA file, handling both .fasta and .fasta.gz formats."""
+        """Opens a FASTA file (supports .fasta and .fasta.gz)."""
         return gzip.open(self.fasta_path, "rt", encoding="utf-8") if self.fasta_path.endswith(".gz") else open(self.fasta_path, "r", encoding="utf-8")
 
     def _parse_fasta_headers(self):
-        """Indexes FASTA headers to enable efficient sequence extraction."""
+        """Indexes FASTA headers and chromosome lengths using memory-mapped access."""
         logger.info(f"Indexing FASTA: {self.fasta_path}")
 
-        with self._open_file() as f:
-            position = 0
+        with open(self.fasta_path, "r", encoding="utf-8") as f:
+            self.mmap_file = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
             chrom = None
-            for line in f:
+            seq_start = 0
+            seq_length = 0
+
+            for line in iter(self.mmap_file.readline, b""):
+                line = line.decode().strip()
+
                 if line.startswith(">"):
+                    if chrom:
+                        self.index[chrom]["length"] = seq_length
                     chrom = line[1:].split()[0]
-                    self.index[chrom] = position
-                position += len(line)
+                    self.index[chrom] = {"position": seq_start, "length": 0}
+                    seq_start = self.mmap_file.tell()
+                    seq_length = 0
+                else:
+                    seq_length += len(line)
+
+            if chrom:
+                self.index[chrom]["length"] = seq_length
 
         logger.info(f"Indexed {len(self.index)} chromosomes from FASTA.")
 
     def get_sequence(self, chrom, start=0, length=None):
-        """Extracts a sequence from the FASTA file efficiently.
-
-        Args:
-            chrom (str): Chromosome name.
-            start (int): Start position.
-            length (int, optional): Length of sequence.
-
-        Returns:
-            str: Extracted DNA sequence.
-        """
+        """Retrieves a sequence from the memory-mapped FASTA file."""
         if chrom not in self.index:
             raise ValueError(f"Chromosome {chrom} not found in FASTA!")
 
-        sequence = []
-        reading = False
+        chrom_position = self.index[chrom]["position"]
+        chrom_length = self.index[chrom]["length"]
 
-        with self._open_file() as f:
-            for line in f:
-                if line.startswith(">"):
-                    reading = line[1:].split()[0] == chrom
-                    continue
-                if reading:
-                    sequence.append(line.strip())
-                    if length and len("".join(sequence)) >= start + length:
-                        break
+        if start >= chrom_length:
+            raise ValueError(f"Start position {start} is out of bounds for chromosome {chrom}")
 
-        full_seq = "".join(sequence)
-        return full_seq[start:start + length] if length else full_seq
+        if length is None or start + length > chrom_length:
+            length = chrom_length - start
+
+        self.mmap_file.seek(chrom_position + start)
+        sequence = self.mmap_file.read(length).decode().replace("\n", "")
+
+        return sequence[:length]
 
     def get_chromosomes(self):
-        """Returns the indexed chromosome names."""
+        """Returns indexed chromosome names."""
         return set(self.index.keys())
+
+    def get_chromosome_length(self, chrom):
+        """Returns the length of the specified chromosome."""
+        if chrom not in self.index:
+            raise ValueError(f"Chromosome {chrom} not found in FASTA!")
+        return self.index[chrom]["length"]
